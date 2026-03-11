@@ -120,6 +120,7 @@ Create all required files under the configured root:
   goals.md               # from templates/goals.md (fill if user gave a goal)
   scorecard.md           # from templates/scorecard.md
   forward-log.md         # from templates/forward-log.md
+  brand-voice.md         # from templates/brand-voice.md (only if content pipeline detected)
   weeks/
     .gitkeep
 ```
@@ -741,12 +742,28 @@ Bundled Python scripts for data collection (in `scripts/`):
 | `domain_overview.py` | Domain-level metrics | DataForSEO credentials |
 | `dataforseo_api.py` | Shared API wrapper (used by other scripts) | DataForSEO credentials |
 | `credential.py` | Credential helper | — |
+| `gap_finder.py` | GSC keyword gap analysis (positions 5-20) | GSC OAuth credentials |
+| `competitor_intel.py` | Competitor threat mapping from gap data | Gap analysis report |
+| `content_plan.py` | Brand-voice weekly content plan | Gap + competitive reports |
+| `build_dashboard.py` | Render reports into HTML dashboard | All reports |
 
 Usage example:
 ```bash
 python3 scripts/keyword_research.py --keyword "calendar sync" --location 2840 --language "en"
 python3 scripts/seo_audit.py "https://example.com"
 ```
+
+---
+
+## Sub-Skill References
+
+Reference documents for the GSC-based workflow (in `skills-ref/`):
+
+| Document | Purpose |
+|----------|---------|
+| `gap-finder.md` | Instructions for running GSC gap analysis |
+| `competitor-intel.md` | Instructions for competitor threat mapping |
+| `brand-writer.md` | Instructions for brand-voice content planning |
 
 ---
 
