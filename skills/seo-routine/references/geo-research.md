@@ -317,3 +317,108 @@ The paper concludes that GEO is essential for:
 4. **SEO professionals** - Evolve practices for generative search
 
 As AI search engines become more prevalent, GEO will become as important as traditional SEO.
+
+---
+
+## AI Crawler Detection (robots.txt)
+
+| Crawler | Owner | Purpose |
+|---------|-------|---------|
+| GPTBot | OpenAI | ChatGPT web search |
+| OAI-SearchBot | OpenAI | OpenAI search features |
+| ChatGPT-User | OpenAI | ChatGPT browsing |
+| ClaudeBot | Anthropic | Claude web features |
+| PerplexityBot | Perplexity | Perplexity AI search |
+| CCBot | Common Crawl | Training data (often blocked) |
+| anthropic-ai | Anthropic | Claude training |
+| Bytespider | ByteDance | TikTok/Douyin AI |
+| cohere-ai | Cohere | Cohere models |
+
+**Recommendation:** Allow GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot for AI search visibility. Block CCBot and training crawlers if desired.
+
+---
+
+## llms.txt Standard
+
+**Location:** `/llms.txt` (root of domain)
+
+**Format:**
+```
+# Title of site
+> Brief description
+
+## Main sections
+- [Page title](url): Description
+- [Another page](url): Description
+
+## Optional: Key facts
+- Fact 1
+- Fact 2
+```
+
+Check for: presence of `/llms.txt`, structured content guidance, key page highlights, contact/authority information.
+
+---
+
+## RSL 1.0 (Really Simple Licensing)
+
+New standard (December 2025) for machine-readable AI licensing terms.
+
+**Backed by:** Reddit, Yahoo, Medium, Quora, Cloudflare, Akamai, Creative Commons
+
+---
+
+## Brand Mention Correlation Data
+
+**Brand mentions correlate 3x more strongly with AI visibility than backlinks.**
+(Ahrefs December 2025 study of 75,000 brands)
+
+| Signal | Correlation with AI Citations |
+|--------|------------------------------|
+| YouTube mentions | ~0.737 (strongest) |
+| Reddit mentions | High |
+| Wikipedia presence | High |
+| LinkedIn presence | Moderate |
+| Domain Rating (backlinks) | ~0.266 (weak) |
+
+**Only 11% of domains** are cited by both ChatGPT and Google AI Overviews for the same query.
+
+---
+
+## Platform-Specific Optimization Matrix
+
+| Platform | Key Citation Sources | Optimization Focus |
+|----------|---------------------|-------------------|
+| **Google AI Overviews** | Top-10 ranking pages (92%) | Traditional SEO + passage optimization |
+| **ChatGPT** | Wikipedia (47.9%), Reddit (11.3%) | Entity presence, authoritative sources |
+| **Perplexity** | Reddit (46.7%), Wikipedia | Community validation, discussions |
+| **Bing Copilot** | Bing index, authoritative sites | Bing SEO, IndexNow |
+
+---
+
+## GEO Readiness Score Formula
+
+**Total: 100 points**
+
+| Criterion | Weight |
+|-----------|--------|
+| Citability | 25% |
+| Structural Readability | 20% |
+| Multi-Modal Content | 15% |
+| Authority & Brand Signals | 20% |
+| Technical Accessibility | 20% |
+
+**Key thresholds:**
+- 92% of AI Overview citations come from top-10 ranking pages, but 47% from pages below position 5
+- Multi-modal content sees 156% higher selection rates
+- AI crawlers do NOT execute JavaScript — SSR is critical
+
+---
+
+## Passage-Level Citability Targets
+
+- **Optimal passage length:** 134-167 words per citation block
+- **First 40-60 words:** Direct answer to the query
+- **Self-contained:** Extractable without surrounding context
+- **Patterns that work:** "X is..." or "X refers to..." definitions
+- **Include:** Specific facts, statistics, attributed claims, unique data points

@@ -515,3 +515,82 @@ For a software product page with FAQ:
 3. **Google Search Console**
    - Check "Enhancements" for schema issues
    - Monitor rich result performance
+
+---
+
+## Schema Type Status Registry (as of Feb 2026)
+
+### ACTIVE — recommend freely
+
+| Type | Notes |
+|------|-------|
+| Organization | |
+| LocalBusiness | |
+| SoftwareApplication | |
+| WebApplication | |
+| Product | Certification markup added April 2025 |
+| ProductGroup | |
+| Offer | |
+| Service | |
+| Article | |
+| BlogPosting | |
+| NewsArticle | |
+| Review | |
+| AggregateRating | |
+| BreadcrumbList | |
+| WebSite | |
+| WebPage | |
+| Person | |
+| ProfilePage | |
+| ContactPage | |
+| VideoObject | |
+| ImageObject | |
+| Event | |
+| JobPosting | |
+| Course | |
+| DiscussionForumPosting | |
+| BroadcastEvent | Video/specialized |
+| Clip | Video/specialized |
+| SeekToAction | Video/specialized |
+| SoftwareSourceCode | Video/specialized |
+
+### RESTRICTED — only for specific sites
+
+| Type | Restriction |
+|------|-------------|
+| FAQ (FAQPage) | Government and healthcare authority sites only (restricted Aug 2023) |
+
+### DEPRECATED — never recommend
+
+| Type | Date | Detail |
+|------|------|--------|
+| HowTo | Sept 2023 | Rich results removed |
+| SpecialAnnouncement | July 2025 | Deprecated |
+| CourseInfo | June 2025 | Retired |
+| EstimatedSalary | June 2025 | Retired |
+| LearningVideo | June 2025 | Retired |
+| ClaimReview | June 2025 | Retired from rich results |
+| VehicleListing | June 2025 | Retired from rich results |
+| Practice Problem | Late 2025 | Retired from rich results |
+| Dataset | Late 2025 | Retired from rich results |
+| Book Actions | Deprecated then reversed | Still functional as of Feb 2026 |
+
+---
+
+## Common Validation Errors
+
+| Error | Description |
+|-------|-------------|
+| Missing `@context` | Every JSON-LD block must include `"@context": "https://schema.org"` |
+| Invalid `@type` | Type name misspelled or not a recognized Schema.org type |
+| Wrong data types | e.g., number passed as string, array where single value expected |
+| Placeholder text | Values like `[Your Name]` left unfilled — Google may issue manual action |
+| Relative URLs | All URLs must be absolute (`https://...`), not relative (`/path`) |
+| Invalid date formats | Dates must be ISO 8601 (`YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SS+00:00`) |
+| Deprecated types | Using HowTo, SpecialAnnouncement, etc. — no rich results, wastes markup |
+
+---
+
+## JS Rendering Note (Dec 2025)
+
+Per Google's December 2025 JS SEO guidance, structured data injected via JavaScript may face **delayed processing**. For time-sensitive markup (especially `Product`, `Offer` with price/availability), include JSON-LD in the **initial server-rendered HTML** rather than relying on client-side injection.

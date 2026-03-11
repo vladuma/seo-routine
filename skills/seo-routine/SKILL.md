@@ -720,9 +720,14 @@ When creating or optimizing content, apply these methods from [references/geo-re
 - Tables for comparison data
 - Schema markup (Article, FAQPage, SoftwareApplication as appropriate)
 
-See [references/schema-templates.md](./references/schema-templates.md) for JSON-LD templates.
+See [references/schema-templates.md](./references/schema-templates.md) for JSON-LD templates and schema type status registry.
 See [references/platform-algorithms.md](./references/platform-algorithms.md) for platform-specific ranking factors.
 See [references/seo-checklist.md](./references/seo-checklist.md) for the full audit checklist.
+See [references/geo-research.md](./references/geo-research.md) for GEO techniques, AI crawler management, and llms.txt.
+See [references/content-quality.md](./references/content-quality.md) for E-E-A-T scoring and AI citation readiness.
+See [references/technical-audit.md](./references/technical-audit.md) for 8-category technical SEO audit checklist.
+See [references/image-optimization.md](./references/image-optimization.md) for image file size, format, and lazy loading guidance.
+See [references/programmatic-seo.md](./references/programmatic-seo.md) for quality gates and thin content safeguards.
 
 ---
 
