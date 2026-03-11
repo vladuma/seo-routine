@@ -1,0 +1,35 @@
+{
+  "name": "seo-routine",
+  "owner": {
+    "name": "vladuma"
+  },
+  "metadata": {
+    "description": "Data-driven weekly SEO optimization routine with prediction tracking",
+    "version": "1.0.0"
+  },
+  "keywords": [
+    "seo",
+    "content-optimization",
+    "prediction-tracking",
+    "weekly-routine",
+    "geo"
+  ],
+  "plugins": [
+    {
+      "name": "seo-routine",
+      "source": "./skills/seo-routine",
+      "description": "Data-driven weekly SEO optimization routine with prediction tracking. Analyzes performance, plans improvements, implements content and technical changes, and measures results.",
+      "version": "1.0.0",
+      "repository": "https://github.com/vladuma/seo-routine",
+      "license": "MIT",
+      "category": "seo",
+      "keywords": [
+        "seo",
+        "geo",
+        "content-optimization",
+        "prediction-tracking",
+        "weekly-routine"
+      ]
+    }
+  ]
+}
