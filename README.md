@@ -91,26 +91,33 @@ Next Monday:
 
 ## Project Structure
 
+This repo is a Claude Code marketplace. The actual plugin lives at `skills/seo-routine/`. All script/reference paths in SKILL.md are relative to the plugin root.
+
 ```
-seo-routine/                      # this plugin
-├── .claude-plugin/plugin.json    # plugin manifest
-├── skills/seo-routine/SKILL.md   # core engine
-├── scripts/                      # Python automation scripts
-├── references/                   # SEO/GEO knowledge base
-├── templates/                    # scaffolding templates
+seo-routine/                         # marketplace repo
+├── .claude-plugin/marketplace.json  # marketplace index
+├── skills/seo-routine/              # the plugin
+│   ├── .claude-plugin/plugin.json   # plugin manifest
+│   ├── SKILL.md                     # core engine
+│   ├── scripts/                     # Python automation
+│   ├── references/                  # SEO/GEO knowledge base
+│   ├── templates/                   # scaffolding templates
+│   └── skills-ref/                  # sub-skill reference docs
+├── docs/                            # design spec
 └── README.md
 
 # Generated in your project by calibrate:
-{root}/                           # default: docs/seo/
-├── seo-config.md                 # project-specific config
-├── goals.md                      # strategic goals
-├── scorecard.md                  # weekly metrics
-├── forward-log.md                # prediction tracking
-└── weeks/YYYY-WNN/               # weekly data
-    ├── inputs/                   # manual data drops
-    ├── analysis.md               # Phase 1 output
-    ├── plan.md                   # Phase 2 output
-    └── changes.md                # Phase 3 output
+{root}/                              # default: docs/seo/
+├── seo-config.md                    # project-specific config
+├── goals.md                         # strategic goals
+├── scorecard.md                     # weekly metrics
+├── forward-log.md                   # prediction tracking
+├── brand-voice.md                   # brand voice guide (if content pipeline detected)
+└── weeks/YYYY-WNN/                  # weekly data
+    ├── inputs/                      # manual data drops
+    ├── analysis.md                  # Phase 1 output
+    ├── plan.md                      # Phase 2 output
+    └── changes.md                   # Phase 3 output
 ```
 
 ## GEO Optimization
