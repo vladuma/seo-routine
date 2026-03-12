@@ -37,6 +37,15 @@ If no subcommand is given, run `status`.
 
 **Parse config:** Read the `seo-config.md` file. Extract the YAML block inside the ` ```yaml ` fence. All paths in the config are relative to the project root unless they start with `/`.
 
+**Load environment:** Read `env_file` from config (defaults to `.env.seo`). Source it before any credential checks or script runs:
+
+```bash
+# Source the env file if it exists (export vars to current shell)
+set -a && [ -f .env.seo ] && source .env.seo && set +a
+```
+
+All credential checks, Python scripts, and publisher commands run with these vars loaded. This is the **single source of truth** for SEO credentials — do not look for vars in `.env`, shell profile, or other files.
+
 **Version check:** Compare `config_version` in the loaded config against the current template version. If the config is outdated (or `config_version` is missing), warn the user: *"Your SEO config is at version N (current is M). Run `/seo-routine calibrate` to upgrade — your settings will be preserved."* Continue running the phase with the existing config (don't block).
 
 **Load effective scoring weights:** Check `memory/seo/learnings.md` for an `## Effective Weights` section. If found, use those weights. Otherwise, use weights from `seo-config.md` `scoring_weights`.
@@ -70,8 +79,11 @@ Before anything else, check if `seo-config.md` already exists:
 Example (v2 → v3):
 Changes:
   + config_version: 3
+  + env_file: ".env.seo"
+  - data_sources.*.credentials_env (moved to .env.seo)
   + publishers: default publisher (command: null, routes: ["*"], approval: require)
   + autopilot: enabled: false, approval_fallback: require
+  + .env.seo created at project root (added to .gitignore)
 
 Preserved:
   ✓ site.url, site.brand, site.industry
@@ -79,8 +91,9 @@ Preserved:
   ✓ scoring_weights (including any manual adjustments)
   ✓ weekly_budget
   ✓ self_crawl settings
-  ✓ data_sources (all enabled sources with credentials)
+  ✓ data_sources (enabled/disabled state, property IDs)
   ✓ All weekly data, scorecard, forward-log, goals
+  ✓ Credential values (migrated from old location → .env.seo)
 ```
 
 5. Ask the user to confirm before writing the upgraded config
@@ -92,7 +105,7 @@ Preserved:
 | From | To | Changes |
 |------|-----|---------|
 | v1 (or missing) | v2 | Add `config_version: 2`. Replace `gsc.property` with `gsc.site_url_env: "GSC_SITE_URL"`. Verify `GSC_SITE_URL` env var is set if GSC is enabled. Add `ga4.property_id` if not present. |
-| v2 | v3 | Add `config_version: 3`. Add `publishers` section with a `default` publisher (`command: null`, `routes: ["*"]`, `approval: require`). Add `autopilot` section (`enabled: false`, `approval_fallback: require`). Preserve any existing config values. |
+| v2 | v3 | Add `config_version: 3`. Add `env_file: ".env.seo"`. Remove `credentials_env`/`site_url_env`/`website_id_env` from data_sources (credentials now live in `.env.seo`, not config). Add `property_id` to GSC if not present. Add `site_id` to Umami if not present. Add `publishers` section with a `default` publisher (`command: null`, `routes: ["*"]`, `approval: require`). Add `autopilot` section (`enabled: false`, `approval_fallback: require`). Create `.env.seo` at project root with vars migrated from any existing `.env`/`env.seo`/shell. Add `.env.seo` to `.gitignore`. |
 
 When adding future migrations, append a new row. Always apply all migrations between the current version and the latest sequentially.
 
@@ -145,23 +158,27 @@ Ask the user these questions (skip any already answered by auto-discovery):
 
 ### Step 3 — Credential Verification
 
-For each enabled data source, check if required environment variables exist:
-
-| Source | Required Env Vars | Setup Instructions if Missing |
-|--------|------------------|-------------------------------|
-| GSC | `GOOGLE_APPLICATION_CREDENTIALS`, `GSC_SITE_URL` | "Create a GCP service account with Search Console read access, download JSON key, set GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json and GSC_SITE_URL=https://example.com (your Search Console property)" |
-| GA4 | `GOOGLE_APPLICATION_CREDENTIALS` | Same service account as GSC, plus add Analytics read access. Set GA4 property ID in seo-config.md |
-| Umami | `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | "Set NEXT_PUBLIC_UMAMI_URL to your Umami instance URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID to the website ID" |
-| DataForSEO | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | "Sign up at dataforseo.com, set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD env vars" |
-| Ahrefs (API) | `AHREFS_API_TOKEN` | "Get API token from ahrefs.com/api, set AHREFS_API_TOKEN" |
+All credentials live in `.env.seo` (or the path set in `env_file`). Source it, then check for required vars:
 
 ```bash
-# Check env var existence (example)
-echo "GSC: ${GOOGLE_APPLICATION_CREDENTIALS:+configured} site=${GSC_SITE_URL:-not set}"
-echo "DataForSEO: ${DATAFORSEO_LOGIN:+configured}"
+set -a && [ -f .env.seo ] && source .env.seo && set +a
 ```
 
-Mark sources with missing credentials as `enabled: false` with a comment explaining what's needed.
+**Required env vars per source (all defined in `.env.seo`):**
+
+| Source | Required in `.env.seo` | What to add if missing |
+|--------|----------------------|----------------------|
+| GSC | `GOOGLE_APPLICATION_CREDENTIALS`, `GSC_SITE_URL` | `GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json` and `GSC_SITE_URL=https://example.com` |
+| GA4 | `GOOGLE_APPLICATION_CREDENTIALS` | Same service account as GSC, plus GA4 read access. Property ID goes in seo-config.md, not env file |
+| Umami | `UMAMI_API_URL`, `UMAMI_SITE_ID` | `UMAMI_API_URL=https://analytics.example.com` and `UMAMI_SITE_ID=abc-123` |
+| DataForSEO | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | `DATAFORSEO_LOGIN=your@email.com` and `DATAFORSEO_PASSWORD=your_password` |
+| Ahrefs (API) | `AHREFS_API_TOKEN` | `AHREFS_API_TOKEN=your_token` |
+
+For each enabled data source, verify the required vars are set after sourcing. If missing:
+1. Tell the user exactly what to add to `.env.seo`
+2. Mark the source as `enabled: false` in config with a comment
+
+**If `.env.seo` doesn't exist yet**, create it in the next step (Step 5).
 
 ### Step 4 — Generate Config
 
@@ -182,6 +199,42 @@ Create all required files under the configured root:
     .gitkeep
 ```
 
+Create the env file (at project root, not inside `{root}/`):
+
+```
+.env.seo                 # credentials for all SEO data sources
+```
+
+Populate `.env.seo` with placeholder entries for each enabled data source:
+
+```bash
+# SEO Routine credentials — sourced automatically by /seo-routine
+# See seo-config.md for which sources are enabled
+
+# Google (GSC + GA4) — service account JSON key
+# GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+# GSC_SITE_URL=https://example.com
+
+# DataForSEO
+# DATAFORSEO_LOGIN=
+# DATAFORSEO_PASSWORD=
+
+# Umami
+# UMAMI_API_URL=
+# UMAMI_SITE_ID=
+
+# Ahrefs
+# AHREFS_API_TOKEN=
+```
+
+Uncomment and fill the lines for enabled sources. If the user already provided values during credential verification (Step 3), write them directly (uncommented).
+
+**Add `.env.seo` to `.gitignore`** if not already present:
+
+```bash
+grep -qxF '.env.seo' .gitignore 2>/dev/null || echo '.env.seo' >> .gitignore
+```
+
 Create Claude memory files:
 
 ```
@@ -191,7 +244,7 @@ memory/seo/
   keyword-tracker.md     # empty with headers: | Keyword | W-4 | W-3 | W-2 | W-1 | Current | Trend |
 ```
 
-**If `{root}/` already exists (re-calibration/upgrade):** Only overwrite `seo-config.md` (merged with user values per Step 0). Preserve all other files (goals, scorecard, forward-log, weekly data, brand-voice). Create any new template files that don't exist yet (e.g., if a new template is added in a future version).
+**If `{root}/` already exists (re-calibration/upgrade):** Only overwrite `seo-config.md` (merged with user values per Step 0). Preserve all other files (goals, scorecard, forward-log, weekly data, brand-voice). Create any new template files that don't exist yet. If `.env.seo` already exists, **do not overwrite it** — only add placeholder lines for newly enabled sources that aren't already in the file.
 
 ---
 

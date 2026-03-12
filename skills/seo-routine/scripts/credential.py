@@ -22,7 +22,7 @@ def get_google_credentials(scopes: list):
     cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
     if not cred_path:
         print("error: GOOGLE_APPLICATION_CREDENTIALS not set", file=sys.stderr)
-        print("Run: export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json", file=sys.stderr)
+        print("Add to .env.seo: GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json", file=sys.stderr)
         print("The service account needs Search Console and/or Analytics read access.", file=sys.stderr)
         sys.exit(1)
 
@@ -42,7 +42,7 @@ def get_gsc_site_url() -> str:
     site_url = os.environ.get("GSC_SITE_URL")
     if not site_url:
         print("error: GSC_SITE_URL not set", file=sys.stderr)
-        print("Run: export GSC_SITE_URL=https://example.com", file=sys.stderr)
+        print("Add to .env.seo: GSC_SITE_URL=https://example.com", file=sys.stderr)
         print("Use your exact Search Console property URL (URL-prefix or sc-domain:example.com).", file=sys.stderr)
         sys.exit(1)
     return site_url
