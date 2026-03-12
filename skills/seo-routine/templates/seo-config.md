@@ -29,7 +29,7 @@ data_sources:
   gsc:
     enabled: false
     credentials_env: "GOOGLE_APPLICATION_CREDENTIALS"
-    property: "https://example.com"
+    site_url_env: "GSC_SITE_URL"
   ga4:
     enabled: false
     credentials_env: "GOOGLE_APPLICATION_CREDENTIALS"

@@ -70,10 +70,11 @@ data_sources:
   gsc:
     enabled: true
     # Requires: GOOGLE_APPLICATION_CREDENTIALS env var pointing to a service
-    # account JSON with Search Console read access, OR OAuth2 refresh token.
+    # account JSON with Search Console read access.
+    # GSC_SITE_URL env var for the Search Console property URL.
     # Calibrate will check for credentials and guide setup if missing.
     credentials_env: "GOOGLE_APPLICATION_CREDENTIALS"
-    property: "https://syncdate.app"
+    site_url_env: "GSC_SITE_URL"
   ga4:
     enabled: true
     credentials_env: "GOOGLE_APPLICATION_CREDENTIALS"

@@ -4,41 +4,20 @@ gap_finder.py -- Connects to Google Search Console, identifies gap zone keywords
 (positions 5-20), generates specific action recommendations, saves .md and .json reports.
 """
 
-import os
 import json
 import datetime
-import pickle
 from pathlib import Path
-from dotenv import load_dotenv
 
-load_dotenv()
+from credential import get_google_credentials, get_gsc_site_url
 
 
 # -- Google Search Console auth -----------------------------------------------
+GSC_SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"]
+
+
 def get_gsc_service():
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    from google.auth.transport.requests import Request
     from googleapiclient.discovery import build
-
-    SCOPES = ["https://www.googleapis.com/auth/webmasters.readonly"]
-    token_path = Path("token.pickle")
-    creds = None
-
-    if token_path.exists():
-        with open(token_path, "rb") as f:
-            creds = pickle.load(f)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            secret_file = os.getenv("GSC_CLIENT_SECRET_FILE", "credentials.json")
-            flow = InstalledAppFlow.from_client_secrets_file(secret_file, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open(token_path, "wb") as f:
-            pickle.dump(creds, f)
-
+    creds = get_google_credentials(GSC_SCOPES)
     return build("searchconsole", "v1", credentials=creds)
 
 
@@ -55,7 +34,7 @@ def fetch_gsc_data(service, site_url, days=90):
         "startRow": 0,
     }
 
-    response = service.searchanalytics().query(siteUrl=site_url, body=body).execute()
+    response = service.searchAnalytics().query(siteUrl=site_url, body=body).execute()
     return response.get("rows", [])
 
 
@@ -106,9 +85,7 @@ def generate_recommendation(keyword, position, impressions, ctr):
 
 # -- Main analysis -------------------------------------------------------------
 def run_gap_analysis():
-    site_url = os.getenv("GSC_SITE_URL")
-    if not site_url:
-        raise ValueError("GSC_SITE_URL not set in .env file")
+    site_url = get_gsc_site_url()
 
     print(f"Connecting to Google Search Console for {site_url}...")
     service = get_gsc_service()

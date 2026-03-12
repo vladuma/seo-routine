@@ -92,15 +92,15 @@ For each enabled data source, check if required environment variables exist:
 
 | Source | Required Env Vars | Setup Instructions if Missing |
 |--------|------------------|-------------------------------|
-| GSC | `GOOGLE_APPLICATION_CREDENTIALS` | "Create a GCP service account with Search Console read access, download JSON key, set GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json" |
-| GA4 | `GOOGLE_APPLICATION_CREDENTIALS` | Same as GSC, plus add Analytics read access to the service account |
+| GSC | `GOOGLE_APPLICATION_CREDENTIALS`, `GSC_SITE_URL` | "Create a GCP service account with Search Console read access, download JSON key, set GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json and GSC_SITE_URL=https://example.com (your Search Console property)" |
+| GA4 | `GOOGLE_APPLICATION_CREDENTIALS` | Same service account as GSC, plus add Analytics read access. Set GA4 property ID in seo-config.md |
 | Umami | `NEXT_PUBLIC_UMAMI_URL`, `NEXT_PUBLIC_UMAMI_WEBSITE_ID` | "Set NEXT_PUBLIC_UMAMI_URL to your Umami instance URL and NEXT_PUBLIC_UMAMI_WEBSITE_ID to the website ID" |
 | DataForSEO | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | "Sign up at dataforseo.com, set DATAFORSEO_LOGIN and DATAFORSEO_PASSWORD env vars" |
 | Ahrefs (API) | `AHREFS_API_TOKEN` | "Get API token from ahrefs.com/api, set AHREFS_API_TOKEN" |
 
 ```bash
 # Check env var existence (example)
-echo "GSC: ${GOOGLE_APPLICATION_CREDENTIALS:+configured}"
+echo "GSC: ${GOOGLE_APPLICATION_CREDENTIALS:+configured} site=${GSC_SITE_URL:-not set}"
 echo "DataForSEO: ${DATAFORSEO_LOGIN:+configured}"
 ```
 
@@ -153,18 +153,18 @@ Launch multiple independent `Agent` tool calls in a single message for concurren
 
 **Agent 1: GSC Data** (if enabled)
 ```bash
-# Use Google Search Console API via service account
-# Fetch: clicks, impressions, CTR, avg position per page and per query
-# Time range: last 7 days vs previous 7 days
-# Use the Google APIs Python client or curl with OAuth2 token
+# Uses GOOGLE_APPLICATION_CREDENTIALS (service account) + GSC_SITE_URL env vars
+python3 scripts/gsc.py --days 7 --compare --dimension page --limit 100
+python3 scripts/gsc.py --days 7 --compare --dimension query --limit 100
 ```
 
-Collect for all pages: clicks, impressions, CTR, average position for last 7 days and previous 7 days. Calculate deltas.
+Collects per-page and per-query: clicks, impressions, CTR, avg position for last 7 days vs previous 7 days with deltas. Also outputs striking-distance opportunities (positions 5-20).
 
 **Agent 2: Analytics Data** (Umami or GA4, if enabled)
 ```bash
+# GA4: Uses GOOGLE_APPLICATION_CREDENTIALS + property_id from seo-config.md
+python3 scripts/ga4.py --property {property_id} --days 7 --compare --limit 100
 # Umami: curl the Umami API for page views, bounce rate, session duration
-# GA4: Use Google Analytics Data API for the same metrics
 ```
 
 **Agent 3: DataForSEO** (if enabled)
