@@ -1,6 +1,6 @@
 ---
 name: seo-routine
-description: Data-driven weekly SEO optimization routine with prediction tracking. Run /seo-routine calibrate to set up, then use analyze → plan → implement → review cycle for continuous SEO improvement. Use when user says "seo routine", "weekly seo", "seo cycle", "seo analyze", "seo plan", "seo implement", "seo review", "seo calibrate", "seo status", or "seo goals".
+description: Data-driven weekly SEO optimization routine with prediction tracking. Run /seo-routine calibrate to set up, then use analyze → plan → implement → review cycle for continuous SEO improvement. Use when user says "seo routine", "weekly seo", "seo cycle", "seo analyze", "seo plan", "seo implement", "seo review", "seo calibrate", "seo status", "seo goals", "seo autopilot", or "seo publish".
 ---
 
 # SEO Routine — Weekly Optimization Engine
@@ -19,6 +19,7 @@ Parse the user's command to determine which phase to execute:
 | `plan` | Phase 2: Select top items, create weekly plan |
 | `implement` | Phase 3: Execute plan in git worktree |
 | `review` | Phase 4: Compare predictions vs actuals |
+| `autopilot` | Full cycle: analyze → plan → implement → publish (unattended) |
 | `status` | Quick: Show current state |
 | `goals "..."` | Quick: Set/update strategic goal |
 
@@ -64,12 +65,13 @@ Before anything else, check if `seo-config.md` already exists:
 4. If the existing version is older (or missing — treat missing as version 1), apply migrations and show a diff summary:
 
 ```
-## Config Upgrade: v1 → v2
+## Config Upgrade: vN → vM
 
+Example (v2 → v3):
 Changes:
-  + config_version: 2
-  ~ gsc.property → gsc.site_url_env: "GSC_SITE_URL" (now reads from env var)
-  + ga4: property_id moved to config, credentials via service account
+  + config_version: 3
+  + publishers: default publisher (command: null, routes: ["*"], approval: require)
+  + autopilot: enabled: false, approval_fallback: require
 
 Preserved:
   ✓ site.url, site.brand, site.industry
@@ -77,6 +79,7 @@ Preserved:
   ✓ scoring_weights (including any manual adjustments)
   ✓ weekly_budget
   ✓ self_crawl settings
+  ✓ data_sources (all enabled sources with credentials)
   ✓ All weekly data, scorecard, forward-log, goals
 ```
 
@@ -89,6 +92,7 @@ Preserved:
 | From | To | Changes |
 |------|-----|---------|
 | v1 (or missing) | v2 | Add `config_version: 2`. Replace `gsc.property` with `gsc.site_url_env: "GSC_SITE_URL"`. Verify `GSC_SITE_URL` env var is set if GSC is enabled. Add `ga4.property_id` if not present. |
+| v2 | v3 | Add `config_version: 3`. Add `publishers` section with a `default` publisher (`command: null`, `routes: ["*"]`, `approval: require`). Add `autopilot` section (`enabled: false`, `approval_fallback: require`). Preserve any existing config values. |
 
 When adding future migrations, append a new row. Always apply all migrations between the current version and the latest sequentially.
 
@@ -133,6 +137,11 @@ Ask the user these questions (skip any already answered by auto-discovery):
    - [ ] DataForSEO
    - [ ] Ahrefs (manual CSV or API)
 5. **Current strategic goal** (optional) — e.g., "Rank top 5 for 'sync google calendars'"
+6. **How do you deploy changes?** — determines publisher setup:
+   - **PR to a branch** — code changes, infrastructure edits (scaffolds a `code` publisher using `gh pr create`)
+   - **External command/script** — CMS API, custom deploy tool (user provides the command; skill scaffolds a publisher entry with their command)
+   - **Manual** — user applies changes themselves (scaffolds `default` publisher with `command: null`)
+   - User can set up **multiple publishers** — e.g., PRs for technical changes, a script for content. Ask if they want to route different change types to different publishers. This can also be refined later in `seo-config.md`.
 
 ### Step 3 — Credential Verification
 
@@ -516,7 +525,7 @@ git worktree add ../seo-YYYY-WNN seo/YYYY-WNN 2>/dev/null || \
 
 All changes happen in the worktree, not the main working directory.
 
-### Step 3 — Execute Changes
+### Step 3 — Generate Changes
 
 Work through the plan items in order. For each item:
 
@@ -555,7 +564,108 @@ Based on QA level from the plan:
 | Full QA — build + test | Run `npm run build`, run `npm test`, verify no errors |
 | Full QA — build + E2E | Run build, run E2E tests if available, verify routes work |
 
-### Step 5 — Generate Changes Report
+If QA fails, **stop immediately**. Do not proceed to publishing. Report the error to the user.
+
+### Step 5 — Write Changesets
+
+After all changes are committed and QA passes, group changes by their classification (from the plan) and write a changeset JSON file for each group to `{root}/weeks/YYYY-WNN/changesets/`:
+
+```json
+{
+  "week": "2026-W11",
+  "group": "content",
+  "classification": "content-only",
+  "items": [
+    {
+      "action": "update_meta_and_faq",
+      "target": "/blog/calendar-sync",
+      "files": ["content/blog/calendar-sync.md"],
+      "diff": "--- a/content/blog/calendar-sync.md\n+++ b/content/blog/calendar-sync.md\n@@ ...",
+      "commit": "abc1234",
+      "prediction": {
+        "metric": "ctr",
+        "baseline": "3.2%",
+        "target": "5.5%",
+        "by_week": "2026-W14"
+      }
+    }
+  ]
+}
+```
+
+Each changeset file is named `{publisher_name}.json` based on the routing in Step 6.
+
+### Step 6 — Route to Publishers
+
+Match each change group to a publisher from `seo-config.md`:
+
+```
+for each change in plan:
+    find first publisher whose "routes" list includes change.classification
+    if no match and routes includes "*", use that publisher
+    if no match at all, use autopilot.approval_fallback:
+        "require" → pause and ask user what to do
+        "skip"    → drop the change, log as "Skipped — no publisher"
+    group matched changes by publisher name
+
+for each publisher group:
+    write changeset file to {root}/weeks/YYYY-WNN/changesets/{publisher_name}.json
+```
+
+### Step 7 — Preview
+
+For each publisher that has a `preview` command defined:
+
+```bash
+# Run the preview command with placeholders substituted
+{publisher.preview}  # e.g., "git diff --stat seo/2026-W11"
+```
+
+Display the preview output to the user (or log it in autopilot mode). If no `preview` command is defined, show the changeset summary (files changed, diff stats).
+
+### Step 8 — Approval Gate
+
+For each publisher group, check the publisher's `approval` setting:
+
+| Setting | Behavior |
+|---------|----------|
+| `auto` | Proceed to publish immediately (if QA passed) |
+| `require` | Pause and show preview to user. Wait for explicit "go" before publishing. In autopilot mode, log as "Awaiting approval" and skip to next group |
+
+When running interactively (not autopilot), present all groups and their approval requirements together so the user can approve in one go.
+
+### Step 9 — Publish
+
+For each approved publisher group, run the publisher's `command`:
+
+```bash
+# Substitute placeholders and execute
+{publisher.command}  # e.g., "gh pr create --base main --head seo/2026-W11 ..."
+```
+
+**If `command` is `null`:** Changes stay in the worktree. Log as "Changes ready in worktree `{worktree_path}` on branch `{branch}`". The user handles deployment manually.
+
+**Check exit codes:**
+
+| Exit | Meaning | Skill action |
+|------|---------|-------------|
+| 0 | Published | Log "Published via {publisher_name}" in forward-log and changes report |
+| 1 | Failed | Log "Publish failed via {publisher_name}", stop, notify user |
+| 2 | Pending | Log "Awaiting action via {publisher_name}", continue to next group |
+
+**Placeholder substitution reference:**
+
+| Placeholder | Value |
+|---|---|
+| `{changeset_file}` | Absolute path to the publisher's changeset JSON |
+| `{branch}` | Git branch name (`seo/YYYY-WNN`) |
+| `{worktree_path}` | Absolute path to the worktree |
+| `{title}` | Short description: `SEO {classification} — {week}` |
+| `{body}` | Markdown summary: items, files, predictions |
+| `{commit}` | Latest commit SHA on the branch |
+| `{week}` | Current ISO week (`YYYY-WNN`) |
+
+### Step 10 — Generate Changes Report
 
 Write `{root}/weeks/YYYY-WNN/changes.md`:
 
@@ -565,17 +675,20 @@ Write `{root}/weeks/YYYY-WNN/changes.md`:
 **Branch:** seo/YYYY-WNN
 **Commits:** N
 
-## Content Changes
+## Changes by Publisher
 
-| # | Action | File(s) | Commit |
-|---|--------|---------|--------|
-| 1 | Rewrote meta + FAQ | content/article.md | abc1234 |
+### {publisher_name} (approval: {auto|require})
 
-## Technical Changes
+| # | Action | File(s) | Commit | Status |
+|---|--------|---------|--------|--------|
+| 1 | Rewrote meta + FAQ | content/article.md | abc1234 | Published |
+| 2 | Fixed schema | lib/schema.ts | def5678 | Published |
 
-| # | Action | File(s) | Commit |
-|---|--------|---------|--------|
-| 1 | Fixed schema | lib/schema.ts | def5678 |
+### {another_publisher} (approval: {auto|require})
+
+| # | Action | File(s) | Commit | Status |
+|---|--------|---------|--------|--------|
+| 1 | New article | content/new-post.md | ghi9012 | Awaiting action |
 
 ## QA Results
 
@@ -583,10 +696,17 @@ Write `{root}/weeks/YYYY-WNN/changes.md`:
 - Tests: PASS/FAIL/SKIPPED
 - E2E: PASS/FAIL/SKIPPED
 
-## Next Steps
+## Publish Summary
 
-- [ ] Review PR
-- [ ] Merge to main
+| Publisher | Changes | Status |
+|-----------|---------|--------|
+| code | 2 | Published |
+| content | 1 | Awaiting action |
+
+## Rollback Commands
+
+If needed, run these to undo published changes:
+- {publisher_name}: `{rollback_command}` (only shown if publisher defines rollback)
 ```
 
 ### Dry-Run Mode (`/seo-routine implement --dry-run`)
@@ -595,7 +715,9 @@ If `--dry-run` is passed, do NOT write any files or create branches. Instead:
 1. Show what files would be changed
 2. Show diff previews for each change
 3. Show QA classification for each item
-4. Summarize total impact
+4. Show publisher routing — which changes go to which publisher
+5. Show what publish commands would run
+6. Summarize total impact
 
 ---
 
@@ -717,6 +839,91 @@ Read `memory/seo/state.md` and display:
 
 ---
 
+## Phase 5: Autopilot (`/seo-routine autopilot`)
+
+Runs the full cycle unattended: analyze → plan → implement → publish → review (if predictions are due).
+
+### Prerequisites
+
+1. `autopilot.enabled` must be `true` in `seo-config.md`
+2. At least one publisher must be configured with a non-null `command` (otherwise there's nowhere to publish — warn and exit)
+3. Config must be calibrated (seo-config.md exists)
+
+### Execution Flow
+
+```
+1. Load config
+2. Run Phase 1 (Analyze) — full data collection and scoring
+3. Run Phase 2 (Plan) — select opportunities, classify, write plan
+   └── Skip the "Present for Approval" step (Step 5) — autopilot doesn't wait
+4. Run Phase 3 (Implement) — generate changes, QA, route, publish
+   └── For each publisher group:
+       - approval: auto  → publish immediately
+       - approval: require → log as "Awaiting approval", skip
+   └── If ALL publishers are "require", nothing gets published — log this
+       and notify user that autopilot completed analysis + plan but
+       changes need manual approval
+5. If any predictions are due (forward-log has Pending items where by_week <= current week):
+   └── Run Phase 4 (Review) — score predictions, update weights
+6. Update memory/seo/state.md with last autopilot run date
+```
+
+### Error Handling in Autopilot
+
+Autopilot must not silently fail. On any error:
+
+| Error | Action |
+|-------|--------|
+| Data source fails | Continue with available sources (same as manual analyze) |
+| QA fails (build/test) | **Stop entire autopilot.** Do not publish. Log error in `changes.md`. Notify user. |
+| Publisher command exits 1 | Stop publishing for that group. Continue other groups. Log failure. |
+| All publishers are `require` | Complete analyze + plan + implement (generate changes). Log: "Autopilot: changes ready, awaiting approval. Run `/seo-routine implement` to review and publish." |
+
+### Autopilot Output
+
+After autopilot completes, write a summary to `{root}/weeks/YYYY-WNN/autopilot-summary.md`:
+
+```markdown
+# Autopilot Summary — YYYY-WNN
+
+**Run date:** YYYY-MM-DD
+**Phases completed:** analyze, plan, implement, review
+
+## Analysis
+- Pages analyzed: N
+- Top opportunity: [page] (score: X)
+
+## Plan
+- Content changes: N
+- Technical changes: M
+
+## Publishing
+| Publisher | Changes | Approval | Status |
+|-----------|---------|----------|--------|
+| code | 2 | auto | Published |
+| content | 1 | require | Awaiting approval |
+
+## Review (if run)
+- Predictions scored: N
+- Accuracy: X%
+- Weight adjustments: [list or "none"]
+
+## Issues
+- [Any errors, skipped items, or data gaps]
+```
+
+### Scheduling Autopilot
+
+Autopilot can be triggered manually (`/seo-routine autopilot`) or scheduled using `/loop`:
+
+```
+/loop 7d /seo-routine autopilot
+```
+
+This runs the full cycle weekly. The skill is idempotent for a given week — if analysis already exists for the current week, it skips Phase 1 and uses the existing data. If a plan already exists, it skips Phase 2. This means re-running autopilot in the same week is safe.
+
+---
+
 ## Error Handling
 
 | Situation | Action |
@@ -728,6 +935,11 @@ Read `memory/seo/state.md` and display:
 | No analysis exists for current week | Tell user to run `analyze` first |
 | No plan exists for current week | Tell user to run `plan` first |
 | Forward-log has no due predictions | Report "no predictions due yet", show next due date |
+| Publisher command exits 1 | Log failure, stop publishing that group, notify user |
+| Publisher command exits 2 | Log as "Awaiting action", continue to next group |
+| No publisher matches a change classification | Use `autopilot.approval_fallback`: `require` → ask user, `skip` → drop the change |
+| Publisher command not found / not executable | Log error, treat as exit 1, suggest user check the command path |
+| Autopilot with all `require` publishers | Complete analyze + plan + generate changes, log that approval is needed |
 
 ---
 
