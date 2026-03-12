@@ -36,6 +36,8 @@ If no subcommand is given, run `status`.
 
 **Parse config:** Read the `seo-config.md` file. Extract the YAML block inside the ` ```yaml ` fence. All paths in the config are relative to the project root unless they start with `/`.
 
+**Version check:** Compare `config_version` in the loaded config against the current template version. If the config is outdated (or `config_version` is missing), warn the user: *"Your SEO config is at version N (current is M). Run `/seo-routine calibrate` to upgrade — your settings will be preserved."* Continue running the phase with the existing config (don't block).
+
 **Load effective scoring weights:** Check `memory/seo/learnings.md` for an `## Effective Weights` section. If found, use those weights. Otherwise, use weights from `seo-config.md` `scoring_weights`.
 
 **Determine current week:** Use ISO week format `YYYY-WNN` based on today's date.
@@ -43,6 +45,52 @@ If no subcommand is given, run `status`.
 ---
 
 ## Phase 0: Calibrate (`/seo-routine calibrate`)
+
+### Step 0 — Detect Existing Installation
+
+Before anything else, check if `seo-config.md` already exists:
+
+1. Check Claude memory `memory/seo/state.md` for the configured `root` path
+2. If no state, search for `**/seo-config.md` in the project
+3. If found, read it and extract `config_version` from the YAML block
+
+**If no existing config:** proceed to Step 1 (fresh install).
+
+**If existing config found:** enter **upgrade mode**:
+
+1. Parse the existing config fully — preserve all user-provided values (site URL, competitors, scoring weights, weekly budget, enabled data sources with their credentials)
+2. Compare `config_version` against the current template version (defined in `templates/seo-config.md`)
+3. If versions match, tell the user the config is up to date and ask if they want to re-run discovery anyway (to pick up new project structure changes)
+4. If the existing version is older (or missing — treat missing as version 1), apply migrations and show a diff summary:
+
+```
+## Config Upgrade: v1 → v2
+
+Changes:
+  + config_version: 2
+  ~ gsc.property → gsc.site_url_env: "GSC_SITE_URL" (now reads from env var)
+  + ga4: property_id moved to config, credentials via service account
+
+Preserved:
+  ✓ site.url, site.brand, site.industry
+  ✓ competitors
+  ✓ scoring_weights (including any manual adjustments)
+  ✓ weekly_budget
+  ✓ self_crawl settings
+  ✓ All weekly data, scorecard, forward-log, goals
+```
+
+5. Ask the user to confirm before writing the upgraded config
+6. Write the merged config (new structure + preserved user values) to `seo-config.md`
+7. Skip Steps 1-3 unless the user asked to re-run discovery
+
+**Migration definitions (apply in order):**
+
+| From | To | Changes |
+|------|-----|---------|
+| v1 (or missing) | v2 | Add `config_version: 2`. Replace `gsc.property` with `gsc.site_url_env: "GSC_SITE_URL"`. Verify `GSC_SITE_URL` env var is set if GSC is enabled. Add `ga4.property_id` if not present. |
+
+When adding future migrations, append a new row. Always apply all migrations between the current version and the latest sequentially.
 
 ### Step 1 — Auto-Discovery (No Questions)
 
@@ -134,7 +182,7 @@ memory/seo/
   keyword-tracker.md     # empty with headers: | Keyword | W-4 | W-3 | W-2 | W-1 | Current | Trend |
 ```
 
-**If `{root}/` already exists (re-calibration):** Only overwrite `seo-config.md`. Preserve all other files.
+**If `{root}/` already exists (re-calibration/upgrade):** Only overwrite `seo-config.md` (merged with user values per Step 0). Preserve all other files (goals, scorecard, forward-log, weekly data, brand-voice). Create any new template files that don't exist yet (e.g., if a new template is added in a future version).
 
 ---
 
