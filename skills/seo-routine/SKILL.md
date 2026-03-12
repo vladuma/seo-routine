@@ -175,11 +175,15 @@ set -a && source .env.seo && set +a && echo "GSC: ${GOOGLE_APPLICATION_CREDENTIA
 
 | Source | Required in `.env.seo` | What to add if missing |
 |--------|----------------------|----------------------|
-| GSC | `GOOGLE_APPLICATION_CREDENTIALS`, `GSC_SITE_URL` | `GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json` and `GSC_SITE_URL=https://example.com` |
-| GA4 | `GOOGLE_APPLICATION_CREDENTIALS` | Same service account as GSC, plus GA4 read access. Property ID goes in seo-config.md, not env file |
+| GSC | `GOOGLE_APPLICATION_CREDENTIALS`, `GSC_SITE_URL` | `GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json` and `GSC_SITE_URL=https://example.com` |
+| GA4 | `GOOGLE_APPLICATION_CREDENTIALS` | Same credentials file as GSC. Property ID goes in seo-config.md, not env file |
 | Umami | `UMAMI_API_URL`, `UMAMI_SITE_ID` | `UMAMI_API_URL=https://analytics.example.com` and `UMAMI_SITE_ID=abc-123` |
 | DataForSEO | `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` | `DATAFORSEO_LOGIN=your@email.com` and `DATAFORSEO_PASSWORD=your_password` |
 | Ahrefs (API) | `AHREFS_API_TOKEN` | `AHREFS_API_TOKEN=your_token` |
+
+**Google credentials:** `GOOGLE_APPLICATION_CREDENTIALS` accepts either type:
+- **Service account key** (`"type": "service_account"`) — direct API access, no browser needed. Service account must be granted access in GSC/GA4 admin.
+- **OAuth client secret** (`client_secret_*.json`) — opens browser for user consent on first run, caches token as `.seo-token.json` for subsequent runs. No admin setup needed if the user already has access.
 
 For each enabled data source, verify the required vars are set after sourcing. If missing:
 1. Tell the user exactly what to add to `.env.seo`
@@ -240,6 +244,7 @@ Uncomment and fill the lines for enabled sources. If the user already provided v
 
 ```bash
 grep -qxF '.env.seo' .gitignore 2>/dev/null || echo '.env.seo' >> .gitignore
+grep -qxF '.seo-token.json' .gitignore 2>/dev/null || echo '.seo-token.json' >> .gitignore
 ```
 
 Create Claude memory files:
