@@ -37,14 +37,21 @@ If no subcommand is given, run `status`.
 
 **Parse config:** Read the `seo-config.md` file. Extract the YAML block inside the ` ```yaml ` fence. All paths in the config are relative to the project root unless they start with `/`.
 
-**Load environment:** Read `env_file` from config (defaults to `.env.seo`). Source it before any credential checks or script runs:
+**Load environment:** Read `env_file` from config (defaults to `.env.seo`). **Every bash command** that needs credentials must source the file as a prefix — shell state does not persist between tool calls. Use this pattern:
 
 ```bash
-# Source the env file if it exists (export vars to current shell)
-set -a && [ -f .env.seo ] && source .env.seo && set +a
+# ALWAYS prefix credential-dependent commands with this:
+set -a && source .env.seo && set +a && <actual command>
+
+# Examples:
+set -a && source .env.seo && set +a && python3 scripts/keyword_research.py "calendar sync"
+set -a && source .env.seo && set +a && python3 scripts/gsc.py --days 7 --dimension query
+set -a && source .env.seo && set +a && echo "GSC: ${GSC_SITE_URL:-NOT SET}"
 ```
 
-All credential checks, Python scripts, and publisher commands run with these vars loaded. This is the **single source of truth** for SEO credentials — do not look for vars in `.env`, shell profile, or other files.
+**This is not optional.** Every `Bash` tool call runs in a fresh shell — sourcing `.env.seo` in one call does NOT carry over to the next. Always prefix.
+
+`.env.seo` is the **single source of truth** for SEO credentials — do not look for vars in `.env`, shell profile, or other files.
 
 **Version check:** Compare `config_version` in the loaded config against the current template version. If the config is outdated (or `config_version` is missing), warn the user: *"Your SEO config is at version N (current is M). Run `/seo-routine calibrate` to upgrade — your settings will be preserved."* Continue running the phase with the existing config (don't block).
 
@@ -158,10 +165,10 @@ Ask the user these questions (skip any already answered by auto-discovery):
 
 ### Step 3 — Credential Verification
 
-All credentials live in `.env.seo` (or the path set in `env_file`). Source it, then check for required vars:
+All credentials live in `.env.seo` (or the path set in `env_file`). Check vars by sourcing inline:
 
 ```bash
-set -a && [ -f .env.seo ] && source .env.seo && set +a
+set -a && source .env.seo && set +a && echo "GSC: ${GOOGLE_APPLICATION_CREDENTIALS:+OK}" && echo "DataForSEO: ${DATAFORSEO_LOGIN:+OK}"
 ```
 
 **Required env vars per source (all defined in `.env.seo`):**
