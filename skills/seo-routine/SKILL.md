@@ -1,11 +1,11 @@
 ---
 name: seo-routine
-description: Data-driven weekly SEO optimization routine with prediction tracking. Run /seo-routine calibrate to set up, then use analyze → plan → implement → review cycle for continuous SEO improvement. Use when user says "seo routine", "weekly seo", "seo cycle", "seo analyze", "seo plan", "seo implement", "seo review", "seo calibrate", "seo status", "seo goals", "seo autopilot", or "seo publish".
+description: Data-driven weekly SEO optimization routine with prediction tracking. Run /seo-routine calibrate to set up, then use analyze → plan → implement → verify → review cycle for continuous SEO improvement. Use when user says "seo routine", "weekly seo", "seo cycle", "seo analyze", "seo plan", "seo implement", "seo verify", "seo review", "seo calibrate", "seo status", "seo goals", "seo autopilot", or "seo publish".
 ---
 
 # SEO Routine — Weekly Optimization Engine
 
-Data-driven weekly SEO optimization cycle: **analyze → plan → implement → review**.
+Data-driven weekly SEO optimization cycle: **analyze → plan → implement → verify → review**.
 Tracks predictions vs actuals to learn what works for each specific site.
 
 ## Command Router
@@ -19,6 +19,7 @@ Parse the user's command to determine which phase to execute:
 | `plan` | Phase 2: Select top items, create weekly plan |
 | `implement` | Phase 3: Execute plan in git worktree |
 | `review` | Phase 4: Compare predictions vs actuals |
+| `verify` | Phase 5: Check published changes are live and correct |
 | `autopilot` | Full cycle: analyze → plan → implement → publish (unattended) |
 | `status` | Quick: Show current state |
 | `goals "..."` | Quick: Set/update strategic goal |
@@ -904,7 +905,119 @@ Read `memory/seo/state.md` and display:
 
 ---
 
-## Phase 5: Autopilot (`/seo-routine autopilot`)
+## Phase 5: Verify (`/seo-routine verify`)
+
+Checks that published changes are actually live and correct on the production site. Run after deploy has propagated (typically 1-24h after publish, depending on the stack).
+
+### Step 1 — Load Changes
+
+1. Load config
+2. Read `{root}/weeks/YYYY-WNN/changes.md` — if doesn't exist, tell user to run `implement` first
+3. Read changeset files from `{root}/weeks/YYYY-WNN/changesets/` for details on what was changed
+4. Build a verification checklist from the changes
+
+### Step 2 — Build Verification Checklist
+
+For each change, determine what to check based on the action type:
+
+| Action type | Checks |
+|---|---|
+| Meta rewrite | Fetch page, confirm `<title>` and `<meta name="description">` match intended values |
+| FAQ added | Confirm FAQ section exists in HTML, validate FAQPage JSON-LD schema |
+| Schema fix | Fetch page, parse JSON-LD, verify expected `@type` and required fields |
+| Content update | Fetch page, confirm key phrases/sections are present, word count meets threshold |
+| New content | Page returns HTTP 200 (not 404/5xx), content length > 300 words, page appears in sitemap |
+| Redirect | Old URL returns 301/302, `Location` header points to expected destination |
+| Sitemap change | Fetch sitemap, confirm expected URLs are present/removed |
+| Robots.txt change | Fetch robots.txt, confirm expected rules |
+| Image optimization | Fetch page, confirm images have alt text, lazy loading attributes |
+
+**Universal checks** on every changed page:
+- HTTP status is 200
+- Canonical tag is present and correct
+- Page is not `noindex` (unless intentional)
+- No broken internal links on the page
+- Schema markup (if any) is valid JSON-LD (parseable, no syntax errors)
+
+### Step 3 — Crawl and Verify
+
+Fetch each changed page from the **live production URL** (from `site.url` in config):
+
+```bash
+# Fetch page and extract key elements
+curl -sL "{site_url}{page_path}" | python3 -c "
+import sys, json, re
+html = sys.stdin.read()
+# Check HTTP status, parse title, meta, schema, canonical, noindex
+"
+```
+
+Rate limit: same as self-crawl (500ms between requests to own site).
+
+For redirect checks, use `curl -sI` to inspect headers without following redirects:
+
+```bash
+curl -sI "{site_url}{old_path}" | head -5
+```
+
+For sitemap/robots checks, fetch them directly:
+
+```bash
+curl -sL "{site_url}/sitemap.xml"
+curl -sL "{site_url}/robots.txt"
+```
+
+### Step 4 — Write Verify Report
+
+Write `{root}/weeks/YYYY-WNN/verify.md`:
+
+```markdown
+# Verify — YYYY-WNN
+
+**Checked:** YYYY-MM-DD
+**Pages verified:** N/M passed
+
+## Results
+
+| Page | Check | Status | Detail |
+|------|-------|--------|--------|
+| /blog/calendar-sync | HTTP 200 | PASS | |
+| /blog/calendar-sync | Meta title | PASS | Matches changeset |
+| /blog/calendar-sync | FAQ schema | PASS | Valid FAQPage, 3 questions |
+| /blog/calendar-sync | Canonical | PASS | Self-referencing |
+| /new-article | HTTP 200 | FAIL | Returns 404 |
+| /new-article | In sitemap | FAIL | Not found in sitemap.xml |
+
+## Summary
+
+- Passed: X checks across Y pages
+- Failed: N checks across M pages
+- Skipped: K (pages with publish status "Awaiting action")
+
+## Action Needed
+
+- [ ] /new-article — not live yet, check deploy status or request indexing via GSC
+- [ ] /blog/old-post — redirect not active, verify server config
+```
+
+### Step 5 — Update Forward-Log
+
+For changes that failed verification:
+- Update the forward-log entry status from "Published" to "Verify failed — [reason]"
+- These items should be flagged in the next `analyze` cycle for re-examination
+
+For changes that passed:
+- Update status to "Live" (confirms the change is deployed and correct)
+
+### Verify Options
+
+**Specific week:** `/seo-routine verify YYYY-WNN` — verify a specific past week instead of current week.
+
+**Specific page:** `/seo-routine verify /blog/some-page` — verify only one page (useful for quick spot-checks).
+
+---
+
+## Phase 6: Autopilot (`/seo-routine autopilot`)
 
 Runs the full cycle unattended: analyze → plan → implement → publish → review (if predictions are due).
 
@@ -1005,6 +1118,9 @@ This runs the full cycle weekly. The skill is idempotent for a given week — if
 | No publisher matches a change classification | Use `autopilot.approval_fallback`: `require` → ask user, `skip` → drop the change |
 | Publisher command not found / not executable | Log error, treat as exit 1, suggest user check the command path |
 | Autopilot with all `require` publishers | Complete analyze + plan + generate changes, log that approval is needed |
+| No changes.md for current week (verify) | Tell user to run `implement` first |
+| Page returns 5xx during verify | Log as FAIL with "Server error", don't retry — notify user |
+| Page returns 404 during verify | Log as FAIL, may indicate deploy hasn't propagated or URL is wrong |
 
 ---
 
@@ -1113,6 +1229,7 @@ Reference documents for the GSC-based workflow (in `skills-ref/`):
       analysis.md            # Phase 1 output
       plan.md                # Phase 2 output
       changes.md             # Phase 3 output
+      verify.md              # Phase 5 output
 ```
 
 ### Claude Memory (`memory/seo/`)
