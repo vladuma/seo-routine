@@ -272,9 +272,9 @@ memory/seo/
 
 ### Step 2 — Collect Data (Parallel)
 
-Launch multiple independent `Agent` tool calls in a single message for concurrency. Each agent collects from one data source:
+Launch multiple independent `Agent` tool calls in a single message for concurrency. Each agent collects from one data source. Use `model: "haiku"` for all data collection agents (see Agent Model Assignment).
 
-**Agent 1: GSC Data** (if enabled)
+**Agent 1: GSC Data** (if enabled) `model: "haiku"`
 ```bash
 # Uses GOOGLE_APPLICATION_CREDENTIALS (service account) + GSC_SITE_URL env vars
 python3 scripts/gsc.py --days 7 --compare --dimension page --limit 100
@@ -283,14 +283,14 @@ python3 scripts/gsc.py --days 7 --compare --dimension query --limit 100
 
 Collects per-page and per-query: clicks, impressions, CTR, avg position for last 7 days vs previous 7 days with deltas. Also outputs striking-distance opportunities (positions 5-20).
 
-**Agent 2: Analytics Data** (Umami or GA4, if enabled)
+**Agent 2: Analytics Data** (Umami or GA4, if enabled) `model: "haiku"`
 ```bash
 # GA4: Uses GOOGLE_APPLICATION_CREDENTIALS + property_id from seo-config.md
 python3 scripts/ga4.py --property {property_id} --days 7 --compare --limit 100
 # Umami: curl the Umami API for page views, bounce rate, session duration
 ```
 
-**Agent 3: DataForSEO** (if enabled)
+**Agent 3: DataForSEO** (if enabled) `model: "haiku"`
 ```bash
 # Use the bundled scripts for keyword research and SERP analysis
 python3 scripts/serp_analysis.py --keywords "keyword1,keyword2" --location 2840
@@ -299,7 +299,7 @@ python3 scripts/competitor_gap.py --domain "example.com" --competitors "comp1.co
 
 Rate limit: max 2 requests/sec, exponential backoff on 429 (1s, 2s, 4s, max 3 retries).
 
-**Agent 4: Self-Crawl** (always runs)
+**Agent 4: Self-Crawl** (always runs) `model: "haiku"`
 
 Crawl the site based on `self_crawl.scope` config:
 - `sitemap`: Fetch sitemap, crawl up to `max_pages` URLs
@@ -331,7 +331,7 @@ Rate limit: 1 request/sec, 3s backoff on 429.
 
 Self-crawl of own site: 500ms delay between requests.
 
-**Agent 5: Manual Inputs** (if files exist in `inputs/`)
+**Agent 5: Manual Inputs** (if files exist in `inputs/`) `model: "haiku"`
 
 Read any CSV/PDF/markdown files dropped in `{root}/weeks/YYYY-WNN/inputs/`:
 - Ahrefs CSVs: parse organic keywords, backlinks
@@ -1134,6 +1134,32 @@ All external API calls must respect these limits:
 | PageSpeed Insights | 1 req/sec | 3s backoff on 429 |
 | GSC API | 5 req/sec | Standard retry on 429 |
 | Self-crawl (own site) | 2 req/sec | 500ms delay between requests |
+
+---
+
+## Agent Model Assignment
+
+When dispatching sub-agents via the `Agent` tool, use the `model` parameter to assign the right model for the task. Heavier models cost more and are slower — use them only where reasoning quality matters.
+
+| Task | Model | Why |
+|------|-------|-----|
+| Data collection (GSC, GA4, DataForSEO scripts) | `haiku` | Running scripts, parsing structured output — no reasoning needed |
+| Self-crawl + HTML parsing | `haiku` | Mechanical extraction and validation |
+| Manual inputs parsing (CSV/PDF) | `haiku` | Structured data extraction |
+| Scoring opportunities | `sonnet` | Follows a formula but needs judgment on edge cases |
+| Plan selection + classification | `sonnet` | Ranking, prioritizing, classifying — analytical work |
+| Content writing (implement — content-only) | `opus` | Creative writing, GEO optimization, tone — quality matters |
+| Technical changes (implement — technical) | `sonnet` | Code edits following clear instructions |
+| Verify (crawl + compare) | `haiku` | Mechanical comparison against expected values |
+| Review (score predictions, adjust weights) | `sonnet` | Analysis, pattern recognition, weight tuning |
+
+**Default:** If not specified, agents inherit the parent model. Always specify `model` explicitly when dispatching agents to control cost and speed.
+
+**Example:**
+```
+Agent(prompt="Collect GSC data...", model="haiku")
+Agent(prompt="Write optimized FAQ section...", model="opus")
+```
 
 ---
 
