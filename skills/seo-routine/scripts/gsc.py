@@ -40,7 +40,7 @@ def query_gsc(service, site_url: str, start: str, end: str,
             }]
         }]
 
-    resp = service.searchAnalytics().query(siteUrl=site_url, body=body).execute()
+    resp = service.searchanalytics().query(siteUrl=site_url, body=body).execute()
     return resp.get("rows", [])
 
 
