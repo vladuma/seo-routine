@@ -515,6 +515,8 @@ For each selected item, determine:
 For each item specify:
 - **What to change** — specific files and modifications
 - **Why** — which scoring signal drives this
+- **Intent** — the target query's intent type (informational/commercial/transactional) and whether the current page format matches the dominant SERP format
+- **SERP context** — note any Featured Snippet, PAA, or AI Overview opportunities for this query
 - **Expected impact** — predicted metric improvement with timeline
 - **Prediction** — structured prediction for the forward-log
 
@@ -532,6 +534,8 @@ Write `{root}/weeks/YYYY-WNN/plan.md`:
 
 ### 1. [Action] — [Target Page]
 **Why:** [Scoring signal and rationale]
+**Intent:** [informational|commercial|transactional] — SERP format: [listicle|how-to|comparison|guide|landing-page]
+**SERP features:** [Featured Snippet / PAA / AI Overview opportunity — or "none detected"]
 **What:** [Specific changes to make]
 **Files:** [List of files to modify]
 **QA:** Diff review
@@ -597,13 +601,21 @@ Work through the plan items in order. For each item:
 
 **Content-only changes:**
 1. Read the target file
-2. Apply the specified modifications (rewrite sections, add FAQ, improve meta, add schema)
-3. Apply GEO optimization techniques from [references/geo-research.md](./references/geo-research.md):
-   - Cite authoritative sources (+40% AI visibility)
+2. Classify the target query's search intent (informational/commercial/transactional) from the plan's SERP notes, and confirm the existing content format matches the dominant SERP format — see [references/seo-writing.md §1](./references/seo-writing.md)
+3. Apply the specified modifications (rewrite sections, add FAQ, improve meta, add schema)
+4. Apply SEO writing techniques from [references/seo-writing.md](./references/seo-writing.md):
+   - Define the primary entity within the first 150 words
+   - Use inverted pyramid at article level + BLUF at every section (H2/H3 leads with its conclusion)
+   - Place question-format H2/H3s with 40–60 word direct answers for Featured Snippet and PAA targeting
+   - Align CTA type to the intent stage (not a "Buy Now" on informational content)
+   - Match content length to SERP competitor average — do not pad
+5. Apply GEO optimization techniques from [references/geo-research.md](./references/geo-research.md):
+   - Cite authoritative sources (+40% AI visibility) — use Tier 1–3 sources per the citation quality tiers
    - Add specific statistics (+37%)
    - Use authoritative, confident tone (+25%)
-   - Include FAQ section with schema
-4. Commit with descriptive message: `seo(content): [action] for [page]`
+   - Include FAQ section with FAQPage schema
+   - Structure each section as a self-contained 134–167 word passage for AIO citation
+6. Commit with descriptive message: `seo(content): [action] for [page]`
 
 **Technical changes:**
 1. Read all affected files
@@ -614,11 +626,13 @@ Work through the plan items in order. For each item:
 6. Commit with descriptive message: `seo(technical): [action]`
 
 **New content:**
-1. Create new article file following the project's content pipeline format
-2. Add to content index/CMS seed file if applicable
-3. Add redirect if replacing an old URL
-4. Apply full GEO optimization
-5. Commit: `seo(content): new article [title]`
+1. Classify the target query's search intent and determine the correct SERP format to match (see [references/seo-writing.md §1](./references/seo-writing.md))
+2. Create new article file following the project's content pipeline format
+3. Add to content index/CMS seed file if applicable
+4. Add redirect if replacing an old URL
+5. Apply full SEO writing and GEO optimization (see [references/seo-writing.md](./references/seo-writing.md) and [references/geo-research.md](./references/geo-research.md))
+6. Verify the page fits into the site's content cluster architecture — add internal links from the relevant pillar page and related cluster pages
+7. Commit: `seo(content): new article [title]`
 
 ### Step 4 — Quality Assurance
 
@@ -1163,13 +1177,33 @@ Agent(prompt="Write optimized FAQ section...", model="opus")
 
 ---
 
-## GEO Optimization Techniques
+## Content Writing Techniques
 
-When creating or optimizing content, apply these methods from [references/geo-research.md](./references/geo-research.md):
+When creating or optimizing content, apply techniques from two complementary references:
+
+### SEO Writing Techniques ([references/seo-writing.md](./references/seo-writing.md))
+
+Core writing principles confirmed by Google or backed by strong evidence:
+
+| Technique | What to do |
+|-----------|-----------|
+| **Intent classification** | Identify query intent (informational/commercial/transactional) and match the dominant SERP format before writing |
+| **Entity definition** | State "[Entity] is [definition]" within the first 150 words to establish NER identity |
+| **Inverted pyramid + BLUF** | Article leads with the answer; every H2/H3 section leads with its conclusion |
+| **Snippet targeting** | Question-format H2/H3 headings + 40–60 word direct answer immediately after |
+| **PAA targeting** | FAQ section with current PAA questions as headings; FAQPage schema on all FAQ sections |
+| **AIO passage structure** | Each section is a self-contained 134–167 word passage; first 40–60 words = direct answer |
+| **Length by SERP** | Match competitor average word count — do not pad; semantic coverage > word count |
+| **Intent-CTA alignment** | CTAs must match the user's decision stage (no "Buy Now" on informational content) |
+| **Internal link anchors** | 70–80% partial-match anchors; avoid generic "click here"; contextual body links outperform footer links |
+
+### GEO Optimization Methods ([references/geo-research.md](./references/geo-research.md))
+
+Princeton research — AI search visibility boosts:
 
 | Method | Visibility Boost | Application |
 |--------|-----------------|-------------|
-| Cite Sources | +40% | Add authoritative citations with links |
+| Cite Sources | +40% | Add authoritative citations with links (use Tier 1–3 sources per seo-writing.md) |
 | Statistics | +37% | Include specific numbers, percentages, data |
 | Quotation Addition | +30% | Expert quotes with proper attribution |
 | Authoritative Tone | +25% | Confident, expert-level language |
@@ -1187,6 +1221,7 @@ When creating or optimizing content, apply these methods from [references/geo-re
 - Tables for comparison data
 - Schema markup (Article, FAQPage, SoftwareApplication as appropriate)
 
+See [references/seo-writing.md](./references/seo-writing.md) for full SEO writing techniques: intent classification, topical clusters, SERP features, semantic SEO, content refresh decisions, anchor text strategy.
 See [references/schema-templates.md](./references/schema-templates.md) for JSON-LD templates and schema type status registry.
 See [references/platform-algorithms.md](./references/platform-algorithms.md) for platform-specific ranking factors.
 See [references/seo-checklist.md](./references/seo-checklist.md) for the full audit checklist.
