@@ -66,9 +66,9 @@ def generate_brief(keyword, intent, position, competitive_context=""):
     """Generate a one-sentence brief for the article."""
     briefs = {
         "How-To": (
-            "Step-by-step walkthrough targeting professionals with multiple calendars -- "
+            "Step-by-step walkthrough targeting the audience described in brand-voice.md -- "
             "lead with the outcome in the first paragraph, include a real setup example, "
-            "and close with a CTA to try SyncDate."
+            "and close with a CTA that matches the reader's decision stage."
         ),
         "Commercial Investigation": (
             "Neutral comparison post with a structured table above the fold -- "
@@ -127,9 +127,10 @@ def run_content_plan():
         impression_score = min(impressions / 100, 10)
         total_score = threat_score * 3 + position_score + impression_score
 
-        # Reframe HIGH threat keywords with a niche angle
-        if threat == "HIGH":
-            keyword = f"{keyword} for multiple calendars"
+        # Reframe HIGH threat keywords with a niche angle (optional: SEO_NICHE_ANGLE="for freelancers")
+        niche_angle = os.environ.get("SEO_NICHE_ANGLE", "").strip()
+        if threat == "HIGH" and niche_angle:
+            keyword = f"{keyword} {niche_angle}"
 
         scored.append({
             "keyword": keyword,

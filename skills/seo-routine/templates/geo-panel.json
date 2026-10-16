@@ -1,0 +1,11 @@
+{
+  "panel_version": "YYYY-MM-DD-v1",
+  "brand_regex": "example",
+  "domain": "example.com",
+  "prompts": [
+    {"id": "C1", "intent": "commercial", "prompt": "best <your category> tool"},
+    {"id": "C2", "intent": "commercial", "prompt": "best <competitor> alternative for <job>"},
+    {"id": "H1", "intent": "how-to", "prompt": "how to <the task your product solves>"},
+    {"id": "S1", "intent": "scenario", "prompt": "how can I <constraint scenario> without <pain>?"}
+  ]
+}

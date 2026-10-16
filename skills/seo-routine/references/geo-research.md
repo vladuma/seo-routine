@@ -1,5 +1,11 @@
 # GEO Research: Princeton Study & Optimization Methods
 
+> **Evidence status.** The percentages below come from a 2023 benchmark on one commercial engine
+> (Perplexity) with synthetic query sets. They are relative changes in a lab visibility metric, not
+> forecasts of citations, traffic or revenue for your site, and other engines and later model versions
+> may behave differently. Use the methods as **hypotheses** to test with the fixed panel in
+> [geo.md](geo.md), and never write a "+N% AI visibility" figure into a plan or prediction.
+
 ## Paper Overview
 
 **Title:** GEO: Generative Engine Optimization  
@@ -285,7 +291,7 @@ Percentage of AI response that comes from your content vs. competitors.
 
 ### Schema Optimization
 
-- [ ] Implement FAQPage schema (+40% AI visibility)
+- [ ] Implement FAQPage schema only where the page genuinely has visible FAQ content (no verified uplift)
 - [ ] Add Article schema with author info
 - [ ] Include datePublished and dateModified
 - [ ] Add SpeakableSpecification for voice search

@@ -1,6 +1,8 @@
 # seo-routine
 
-Data-driven weekly SEO optimization routine for Claude Code. Analyzes performance, plans improvements, implements changes, and tracks predictions vs actuals to learn what works.
+A Claude Code skill for growing organic traffic on a site you own. It measures Search Console, analytics
+and AI-answer visibility, plans a small number of falsifiable experiments, implements the changes you
+authorize, checks them on the live site, and scores the outcome without flattering itself.
 
 ## Installation
 
@@ -12,122 +14,104 @@ Data-driven weekly SEO optimization routine for Claude Code. Analyzes performanc
 /plugin install seo-routine@vladuma
 ```
 
-## Quick Start
+## Quick start
 
 ```bash
-# 1. Set up for your project (one-time)
-/seo-routine calibrate
+/seo-routine calibrate     # one-time setup (or upgrade from an older config)
 
-# 2. Weekly cycle
-/seo-routine analyze       # Collect data, score opportunities
-/seo-routine plan          # Pick top items, create plan
-/seo-routine implement     # Execute in git worktree
-/seo-routine review        # Compare predictions vs actuals
+# Then, as often as you like:
+/seo-routine analyze       # collect and reconcile data, rank evidence-backed opportunities
+/seo-routine plan          # register at most the configured number of experiments
+/seo-routine implement     # edit in a worktree, run independent review and the repo's checks
+/seo-routine publish       # the configured, authorized action (e.g. open a PR)
+/seo-routine verify        # check the deployed site
+/seo-routine review        # score due predictions once
 ```
 
 ## Commands
 
 | Command | What it does |
-|---------|-------------|
-| `calibrate` | Discovers project structure, asks 3-5 questions, generates `seo-config.md` |
-| `analyze` | Collects data from GSC, analytics, DataForSEO, self-crawl; scores all pages |
-| `plan` | Selects top opportunities within weekly budget, writes plan with predictions |
-| `implement` | Executes plan in isolated git worktree on `seo/YYYY-WNN` branch |
-| `review` | Scores past predictions (Hit/Partial/Miss), updates scorecard, adjusts weights |
-| `status` | Shows current week, pending work, last run summary |
-| `goals "..."` | Sets or updates strategic goal for weighted scoring |
+|---|---|
+| `calibrate` | Discovers the project, asks a few questions, writes or upgrades `seo-config.md`, tests data sources |
+| `analyze` | Collects and reconciles GSC, analytics, DataForSEO and a bounded self-crawl; ranks opportunities with their evidence |
+| `plan` | Registers zero to N experiments in the ledger with predeclared baselines, targets and horizons |
+| `implement` | Makes the planned edits, runs checks, gets an independent adversarial review. `--dry-run` shows the diff only |
+| `publish` | Runs the configured publisher action when authorized; PR, merge and deploy are tracked separately |
+| `verify` | Checks changed URLs on production: status, canonical, indexability, claims, schema, sitemap |
+| `review` | Scores predictions whose live exposure and horizon exist, by direction and progress |
+| `geo` | Runs a fixed AI-answer panel and reports it next to real AI-referral outcomes |
+| `autopilot` | The whole cycle inside your authorized scope, with every phase's state recorded |
+| `status` | Latest data dates, experiments and their review/PR/deploy/live states, next due dates |
+| `goals "..."` | Sets the strategic goal and archives the previous one |
 
-## How It Works
+## What makes it different
 
-### Composite Scoring Model
+- **Evidence, not scores.** Opportunities are ranked by recorded mechanism, evidence, the best competing
+  explanation and what would refute it. There is no composite number, and no weights quietly tuned from
+  a few results.
+- **Budgets are maxima.** Zero experiments is a valid week. A verified fix is recorded as a repair, not a
+  growth prediction.
+- **Honest scoring.** Predictions are scored once, by direction and progress toward a target declared in
+  advance. Hit, Partial and Miss are reported separately. Missing or confounded evidence is
+  `pending`, `insufficient_evidence`, `confounded` or `unscorable`, never a Hit.
+- **Separate states.** `local_only`, `pr_open`, `merged`, `deployed` and live verification are recorded
+  independently. The outcome window only starts after live verification.
+- **Failed sources are gaps.** A source that errors is never silently treated as zero traffic. GSC data
+  is finalized, with property totals kept apart from page and query rows, and unknown query coverage
+  reported instead of called nonbrand.
+- **Independent review.** A fresh read-only reviewer must `PASS` content changes before they are
+  published.
+- **GEO as an instrument.** A fixed, versioned prompt panel is reported with its misses and sample sizes,
+  beside actual AI referral visits and signups. Research-derived tactics are hypotheses, not promised
+  uplifts.
 
-Each page/keyword gets a score (0-100) based on 6 weighted signals:
-
-| Signal | Default Weight | What it measures |
-|--------|---------------|-----------------|
-| Striking distance | 25% | Pages at positions 5-20 with decent impressions |
-| CTR gap | 20% | Pages underperforming expected CTR for their position |
-| Content quality | 15% | Missing FAQ, short content, no schema, no internal links |
-| Technical debt | 15% | Missing canonical, broken meta, no og:image, CWV issues |
-| Keyword gap | 15% | Keywords where competitors rank but you don't |
-| Goal alignment | 10% | Pages/keywords matching your active strategic goal |
-
-Weights automatically adjust based on prediction accuracy over time.
-
-### Prediction Tracking
-
-Every planned change includes a measurable prediction:
-> "Rewriting meta + FAQ for /blog/example will move position from 14 to 8 by W14"
-
-The review phase scores each prediction as Hit (>=75% of target), Partial (25-74%), or Miss (<25%). This feedback loop adjusts scoring weights so the model gets smarter over time.
-
-### Data Sources
+## Data sources
 
 | Source | Type | Requires |
-|--------|------|----------|
-| Google Search Console | Automated | Service account with GSC access |
-| Google Analytics 4 | Automated | Service account with GA4 access |
-| Umami | Automated | Umami URL + website ID |
-| DataForSEO | Automated | DataForSEO login + password |
-| Ahrefs | Manual CSV drops | Ahrefs subscription |
-| Self-crawl | Automated (always on) | Nothing — crawls your own site |
+|---|---|---|
+| Google Search Console | Automated (`scripts/gsc.py`) | Service account or OAuth client with access |
+| Google Analytics 4 | Automated, cross-check | Same Google credentials |
+| Analytics provider (Umami, Plausible, ...) | Collector you configure | Provider URL and site ID |
+| DataForSEO | Automated | Login and password |
+| Ahrefs | Manual CSV drops or API | Subscription |
+| AI answers | `scripts/geo_panel.py` | DataForSEO credentials and a panel file |
+| Self-crawl | Always on | Nothing |
 
-## Typical Weekly Flow
+Credentials live in `.env.seo`, which calibrate adds to `.gitignore`.
 
-```
-Monday:
-  1. Drop Ahrefs CSVs into docs/seo/weeks/YYYY-WNN/inputs/
-  2. /seo-routine analyze         → produces analysis.md
-  3. /seo-routine plan            → produces plan.md, review + approve
-
-Tuesday-Thursday:
-  4. /seo-routine implement       → creates branch, makes changes
-  5. Review PR, merge
-
-Next Monday:
-  6. /seo-routine review          → scores past predictions
-  7. Back to step 1
-```
-
-## Project Structure
-
-This repo is a Claude Code marketplace. The actual plugin lives at `skills/seo-routine/`. All script/reference paths in SKILL.md are relative to the plugin root.
+## What it writes into your project
 
 ```
-seo-routine/                         # marketplace repo
-├── .claude-plugin/marketplace.json  # marketplace index
-├── skills/seo-routine/              # the plugin
-│   ├── .claude-plugin/plugin.json   # plugin manifest
-│   ├── SKILL.md                     # core engine
-│   ├── scripts/                     # Python automation
-│   ├── references/                  # SEO/GEO knowledge base
-│   ├── templates/                   # scaffolding templates
-│   └── skills-ref/                  # sub-skill reference docs
-├── docs/                            # design spec
-└── README.md
-
-# Generated in your project by calibrate:
 {root}/                              # default: docs/seo/
-├── seo-config.md                    # project-specific config
-├── goals.md                         # strategic goals
-├── scorecard.md                     # weekly metrics
-├── forward-log.md                   # prediction tracking
-├── brand-voice.md                   # brand voice guide (if content pipeline detected)
-└── weeks/YYYY-WNN/                  # weekly data
-    ├── inputs/                      # manual data drops
-    ├── analysis.md                  # Phase 1 output
-    ├── plan.md                      # Phase 2 output
-    └── changes.md                   # Phase 3 output
+├── seo-config.md                    # settings (config version 4)
+├── experiments.json                 # experiment ledger: predictions, delivery, verification, evaluation
+├── goals.md  learnings.md
+├── geo-panel.json  geo-scorecard.md # when GEO is enabled
+└── weeks/<ISO-week>/<run-date>/     # inputs/, analysis.md, plan.md, changes.md, verify.md, review.md
 ```
 
-## GEO Optimization
+## Upgrading from 1.x
 
-Content changes incorporate Princeton GEO research methods for AI search visibility:
+Run `/seo-routine calibrate`. It migrates a v1-v3 config to v4, keeps your site, competitors, data
+sources and credentials, retires the composite scoring weights and weekly quotas, and leaves your
+`forward-log.md`, scorecards and weekly folders untouched as historical evidence. Old forward-log
+predictions are not auto-scored under the new rules. See the migration table in `skills/seo-routine/SKILL.md`.
 
-- **Cite Sources** (+40%) — authoritative references
-- **Statistics** (+37%) — specific data points
-- **Authoritative Tone** (+25%) — expert-level language
-- **FAQ Schema** — structured data for AI citation
+## Repository layout
+
+This repository is a Claude Code marketplace. The plugin lives at `skills/seo-routine/`.
+
+```
+.claude-plugin/marketplace.json
+skills/seo-routine/
+├── .claude-plugin/plugin.json
+├── SKILL.md              # router, setup, calibration and migrations, publishers, autopilot
+├── references/           # measurement, experiments, delivery, geo + SEO/GEO background
+├── scripts/              # Python collectors
+├── templates/            # scaffolding written by calibrate
+└── skills-ref/           # gap-finder, competitor-intel, brand-writer notes
+docs/design-spec.md
+```
 
 ## License
 

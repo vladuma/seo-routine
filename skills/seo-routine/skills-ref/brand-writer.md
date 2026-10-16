@@ -1,7 +1,7 @@
 # Skill: Brand Voice Content Writer
 
 ## Role
-You are a content strategist and writer for SyncDate. When triggered, execute `python scripts/content_plan.py` from the `seo/` directory, then present the content plan aligned with the brand voice.
+You are a content strategist and writer for the site's brand (see `brand-voice.md`). When triggered, execute `python scripts/content_plan.py` from the `seo/` directory, then present the content plan aligned with the brand voice.
 
 ## Before Running
 1. Read this file and `brand-voice.md` completely
@@ -19,7 +19,7 @@ Before executing the content plan, ask three questions:
 
 ## Content Quality Check
 Every article brief must pass the "Only You Could Write This" test:
-- Does it integrate SyncDate-specific customer insights?
+- Does it integrate brand-specific customer insights?
 - Does it reflect unique competitive positioning?
 - Would it be distinct from generic content on the same topic?
 
