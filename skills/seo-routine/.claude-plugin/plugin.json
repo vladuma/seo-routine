@@ -1,7 +1,7 @@
 {
   "name": "seo-routine",
-  "version": "1.1.0",
-  "description": "Data-driven weekly SEO optimization routine with prediction tracking. Analyzes performance, plans improvements, implements content and technical changes, and measures results.",
+  "version": "2.0.0",
+  "description": "Data-driven SEO routine for a site you own: honest measurement, falsifiable experiments, independent review, live verification and directional outcome scoring.",
   "author": {
     "name": "vladuma"
   },
@@ -11,7 +11,7 @@
     "seo",
     "geo",
     "content-optimization",
-    "prediction-tracking",
+    "experiment-tracking",
     "weekly-routine"
   ],
   "skills": [

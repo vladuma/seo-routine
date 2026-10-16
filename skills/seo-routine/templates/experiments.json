@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "created_at": "YYYY-MM-DD",
+  "legacy_policy": "A pre-v4 forward-log.md remains historical. Reconcile deployment, metric definition and duplicate/carry rows before migrating any prediction. No legacy row contributes automatically to current growth accuracy.",
+  "experiments": []
+}

@@ -53,7 +53,7 @@ def build_dashboard():
     plan = get_latest_report("content-plan-*.json")
 
     today = datetime.date.today().strftime("%b %-d, %Y")
-    site_url = gap.get("site_url", "syncdate.app") if gap else "syncdate.app"
+    site_url = gap.get("site_url", "your site") if gap else "your site"
     kpis = gap.get("kpis", {}) if gap else {}
     keywords = gap.get("keywords", []) if gap else []
     comp_results = comp.get("results", []) if comp else []

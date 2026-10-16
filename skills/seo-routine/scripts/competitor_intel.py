@@ -95,8 +95,7 @@ def analyze_competitor(competitor, keyword):
     # High-authority domains
     high_authority = [
         "google.com", "microsoft.com", "apple.com", "support.google.com",
-        "support.microsoft.com", "zapier.com", "notion.so", "calendly.com",
-        "reclaim.ai", "clockwise.com",
+        "support.microsoft.com", "zapier.com", "notion.so", "wikipedia.org",
     ]
 
     current_year = str(datetime.date.today().year)

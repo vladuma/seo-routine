@@ -109,9 +109,9 @@ State the answer immediately, then add one supporting sentence.]
 **◎ Evidence-based:** PAA prevalence grew 34.7% from Feb 2024 to Jan 2025; appears in 80%+ of queries.
 
 - Research current PAA questions for your target keyword before writing
-- Structure an FAQ or Q&A section with PAA questions as H2/H3 headings
+- Add an FAQ or Q&A section with PAA questions as H2/H3 headings when it serves the reader; it is not required on every page
 - Answer each in 2–4 sentences
-- Use `FAQPage` schema on all FAQ sections
+- Use `FAQPage` markup only when the visible page carries those exact questions and answers, and keep markdown out of the answer strings, because the JSON-LD path often strips tags only and markdown link syntax survives literally. Google restricts FAQ rich results for most sites, so do not expect a SERP feature from it
 - Use interrogative formats: how, what, why, can, does, is
 
 ### AI Overviews (AIO) Optimization
@@ -248,7 +248,7 @@ Apply at two levels simultaneously:
 | Type | Example | Use |
 |------|---------|-----|
 | Exact match | "email marketing tips" | Max 10–15% of links to any target page |
-| Partial match | "best tips for email marketing" | Primary approach — 70–80% of links |
+| Partial match | "best tips for email marketing" | Usually the natural default; no ratio is a requirement |
 | Descriptive/topical | "our comprehensive guide to email deliverability" | Default when no keyword fits naturally |
 | Branded | "Mailchimp's email guide" | Navigational links to branded resources |
 | Generic | "click here," "learn more" | **Avoid** — provides zero ranking signal |
